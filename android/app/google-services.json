@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "792763520034",
+    "project_id": "ausy-mobile",
+    "storage_bucket": "ausy-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:792763520034:android:afa0ace87c5e1d2d37667b",
+        "android_client_info": {
+          "package_name": "com.ausy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBELvqM5q-DYbZ00v37-t6GY3pA_4UdaSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
