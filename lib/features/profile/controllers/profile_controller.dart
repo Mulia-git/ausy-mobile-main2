@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../auth/controllers/auth_controller.dart';
+
 class ProfileController extends GetxController {
 
   final DioService _dioService = DioService();
@@ -23,7 +25,7 @@ class ProfileController extends GetxController {
   final birthDateController = TextEditingController();
   final gender = ''.obs;
   var localPhotoPath = ''.obs;
-
+  final AuthController authController = Get.find<AuthController>();
   @override
   void onInit() {
     super.onInit();
@@ -55,10 +57,13 @@ class ProfileController extends GetxController {
       final picker = ImagePicker();
       final XFile? pickedFile =
       await picker.pickImage(source: ImageSource.gallery);
-
+      await authController.loadCustomerData();
       if (pickedFile == null) return;
 
       File file = File(pickedFile.path);
+
+      /// 🔥 LANGSUNG UPDATE UI (INSTANT PREVIEW)
+      localPhotoPath.value = file.path;
 
       dio.FormData formData = dio.FormData.fromMap({
         "action": "upload_foto",
@@ -72,12 +77,18 @@ class ProfileController extends GetxController {
       );
 
       if (response.statusCode == 200) {
+        /// setelah sukses upload → update profilePicture
+        final ext = file.path.split('.').last;
         final imageUrl =
-            "${ApiConstants.baseUrl.replaceAll('api.php', '')}photopasien/pages/upload/${customer.value!.medicalRecord}.jpg?v=${DateTime.now().millisecondsSinceEpoch}";
+            "${ApiConstants.baseUrl.replaceAll('api.php', '')}photopasien/pages/upload/${customer.value!.medicalRecord}.$ext";
+
+        final current = customer.value;
 
         customer.value =
             customer.value?.copyWith(profilePicture: imageUrl);
 
+        // authController.customer.value = updatedCustomer;
+        authController.customer.refresh();
         showNotif("Berhasil", "Foto berhasil diperbarui");
       }
     } catch (e) {

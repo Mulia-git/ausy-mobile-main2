@@ -4,52 +4,58 @@ import 'package:intl/intl.dart';
 class Blog {
   final int id;
   final String slug;
-  final String url;
-  final String image;
   final String title;
+  final String image;
   final String excerpt;
+  final String content;
   final String date;
-  final List<String> categories;
 
   Blog({
     required this.id,
     required this.slug,
-    required this.url,
-    required this.image,
     required this.title,
+    required this.image,
     required this.excerpt,
+    required this.content,
     required this.date,
-    required this.categories,
   });
 
-  factory Blog.fromJson(Map<String, dynamic> json) {
+  factory Blog.fromApi(Map<String, dynamic> json) {
+    String imageUrl = json['cover_photo'] ?? '';
+
+    if (!imageUrl.startsWith('http') && imageUrl.isNotEmpty) {
+      imageUrl =
+      "https://apam.rsaurasyifa.com/uploads/news/$imageUrl";
+    }
+
+    final rawContent = json['content'] ?? '';
+
     return Blog(
-      id: json['id'],
-      slug: json['slug'],
-      url: json['link'],
-      image: json['_embedded']?['wp:featuredmedia']?[0]?['source_url'] ?? '',
-      title: json['title']['rendered'],
-      excerpt: _removeHtmlTags(json['excerpt']['rendered']),
-      date: _formatDate(json['date']), // Getting post date
-      categories: _getCategories(json['_embedded']?['wp:term']),
+      id: int.tryParse(json['id'].toString()) ?? 0,
+      slug: json['slug'] ?? '',
+      title: json['title'] ?? '',
+      image: imageUrl,
+      excerpt: _removeHtml(json['intro'] ?? ''),
+      content: _removeHtml(rawContent),
+      date: json['tanggal'] ?? '',
     );
   }
-  static String _removeHtmlTags(String htmlString) {
-    return parse(htmlString).body?.text ?? '';
+
+  static String _removeHtml(String htmlString) {
+    final document = parse(htmlString);
+    return document.body?.text
+        .replaceAll('\n', ' ')
+        .replaceAll('\r', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim() ??
+        '';
+  }
+  String get shortContent {
+    final text = excerpt.isNotEmpty ? excerpt : content;
+    if (text.length > 120) {
+      return "${text.substring(0, 120)}...";
+    }
+    return text;
   }
 
-  static List<String> _getCategories(dynamic categoriesData) {
-    if (categoriesData == null || categoriesData.isEmpty) return [];
-    return categoriesData[0]
-        .map<String>((cat) => cat['name'].toString())
-        .toList();
-  }
-   static String _formatDate(String date) {
-    try {
-      DateTime parsedDate = DateTime.parse(date);
-      return DateFormat('d MMM y').format(parsedDate); // Example: 16 Feb 2025
-    } catch (e) {
-      return date; // Fallback in case of error
-    }
-  }
 }

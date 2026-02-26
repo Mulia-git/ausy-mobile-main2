@@ -6,8 +6,10 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:in_app_update/in_app_update.dart';
 
 import 'features/auth/controllers/auth_controller.dart';
+import 'features/blog/views/blog_page.dart';
 import 'features/customer/views/antrean_apotek_page.dart';
 import 'features/customer/views/antrean_poli_page.dart';
 import 'features/customer/views/widgets/notification_box.dart';
@@ -34,6 +36,7 @@ import 'features/schedule/views/schedule_page.dart';
 import 'features/telemedicine/views/telemedicine_page.dart';
 import 'features/history/views/ralan_detail_page.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -50,7 +53,8 @@ void main() async {
     SystemUiMode.manual,
     overlays: SystemUiOverlay.values,
   );
-
+  await GetStorage.init();
+  Get.put(AuthController(), permanent: true);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.white,
     statusBarIconBrightness: Brightness.dark,
@@ -206,7 +210,10 @@ class MyAppState extends State<MyApp> {
             name: '/antreanApotek',
             page: () => const AntreanApotekPage(),
           ),
-
+          GetPage(
+            name: '/blog',
+            page: () => BlogPage(),
+          ),
 
           GetPage(
             name: '/notification',
@@ -215,5 +222,22 @@ class MyAppState extends State<MyApp> {
         ],
       ),
     );
+  }
+  Future<void> checkForUpdate() async {
+    try {
+      final updateInfo = await InAppUpdate.checkForUpdate();
+
+      if (updateInfo.updateAvailability ==
+          UpdateAvailability.updateAvailable) {
+
+        // Immediate update (wajib update)
+        await InAppUpdate.performImmediateUpdate();
+
+        // atau Flexible update (tidak wajib)
+        // await InAppUpdate.startFlexibleUpdate();
+      }
+    } catch (e) {
+      print("Update error: $e");
+    }
   }
 }

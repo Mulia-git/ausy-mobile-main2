@@ -13,6 +13,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../blog/views/widgets/blog_item.dart';
 import '../../book/controllers/book_controller.dart';
 import '../../notification/controllers/notification_controller.dart';
 
@@ -40,10 +41,10 @@ class CustomerPageState extends State<CustomerPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       bookController.checkActiveBooking();
+
       blogController.blogs.clear();
-      blogController.setCategory(71);
-      blogController.setQuery('');
-      blogController.loadBlogs(paging: false);
+      blogController.loadLatestBlogs(limit: 3);
+
       doctorController.doctors.clear();
       doctorController.changeQuery('');
       doctorController.changeShift("Semua");
@@ -441,58 +442,114 @@ class CustomerPageState extends State<CustomerPage> {
                             );
                           }),
                           // const DoctorScheduleList(),
-                          const Padding(
-                            padding: EdgeInsets.fromLTRB(16, 10, 16, 10),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
+                                const Text(
                                   "Artikel Terbaru",
                                   style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColor.textColor),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColor.textColor,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Get.toNamed('/blog');
+                                  },
+                                  child: const Row(
+                                    children: [
+                                      Text(
+                                        "Lihat Artikel Lainnya",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: AppColor.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Icon(
+                                        Icons.arrow_forward_ios,
+                                        size: 12,
+                                        color: AppColor.primary,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                           ),
+
                           Obx(() {
-                            return blogController.blogs.isEmpty
-                                ? Padding(
-                              padding: const EdgeInsets.fromLTRB(15, 0, 15, 10),
-                              child: Shimmer.fromColors(
-                                baseColor: Colors.grey.shade300,
-                                highlightColor: Colors.grey.shade100,
-                                child: SizedBox(
-                                  height: 120,
-                                  width: double.infinity,
-                                  child: ClipRRect(
+                            /// 🔄 LOADING
+                            if (blogController.isLoading.value) {
+                              return Padding(
+                                padding: const EdgeInsets.fromLTRB(15, 0, 15, 10),
+                                child: Shimmer.fromColors(
+                                  baseColor: Colors.grey.shade300,
+                                  highlightColor: Colors.grey.shade100,
+                                  child: SizedBox(
+                                    height: 120,
+                                    width: double.infinity,
+                                    child: ClipRRect(
                                       borderRadius: BorderRadius.circular(12.0),
-                                      child: Image.asset(
-                                        'assets/images/placeholder.png',
-                                        fit: BoxFit.cover,
-                                      )),
+                                      child: Container(color: Colors.white),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            )
-                                : SingleChildScrollView(
+                              );
+                            }
+
+                            /// ❌ DATA KOSONG
+                            if (blogController.blogs.isEmpty) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(vertical: 30),
+                                alignment: Alignment.center,
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.article_outlined,
+                                      size: 45,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      "Belum ada artikel tersedia",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            /// ✅ ADA DATA
+                            return SingleChildScrollView(
                               padding: const EdgeInsets.fromLTRB(15, 5, 0, 5),
                               scrollDirection: Axis.horizontal,
                               child: Row(
                                 children: List.generate(
-                                  blogController.blogs.length,
-                                      (index) =>
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            right: 10),
-                                        child: BlogItem(
-                                          data: blogController.blogs[index],
-                                        ),
+                                  blogController.blogs.length > 3
+                                      ? 3
+                                      : blogController.blogs.length,
+                                      (index) => Padding(
+                                    padding: const EdgeInsets.only(right: 10),
+                                    child: SizedBox(
+                                      width: 260,
+                                      child: BlogItem(
+                                        data: blogController.blogs[index],
                                       ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             );
-                          })
+                          }),
                         ],
                       ),
                     ),

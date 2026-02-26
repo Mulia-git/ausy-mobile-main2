@@ -22,6 +22,10 @@ class AuthController extends GetxController {
   var operateDrone = 'Ya'.obs;
   final AuthService _authService = AuthService();
   String get noRkmMedis => storage.read('medicalRecord') ?? '';
+
+
+
+
   AuthController() {
     // Initialize authentication status from storage
     final storedAuth = storage.read('isAuthenticated') ?? false;
@@ -38,11 +42,23 @@ class AuthController extends GetxController {
     // isLoading.value = false;
   }
 
-  void loadCustomerData() async {
-    loadCustomer = true;
-    // customer.value = _authService.getCustomerFromStorage();
-    customer.value = await _authService.fetchCustomerData();
+  void onInit() {
+    super.onInit();
+
+    final storedAuth = storage.read('isAuthenticated') ?? false;
+    isAuthenticated.value = storedAuth;
+
+    if (storedAuth) {
+      loadCustomerData();
+    }
   }
+
+  Future<void> loadCustomerData() async {
+    isLoading.value = true;
+    customer.value = await _authService.fetchCustomerData();
+    isLoading.value = false;
+  }
+
 
   void togglePasswordVisibility() {
     showPassword.value = !showPassword.value;
@@ -68,7 +84,7 @@ class AuthController extends GetxController {
 
           isAuthenticated.value = true;
           storage.write('isAuthenticated', true);
-          storage.write('medicalRecord', medicalRecord); // Simpan info medis
+          storage.write('medicalRecord', medicalRecord);
           Get.offNamed('/home');
         } else {
           Get.snackbar(

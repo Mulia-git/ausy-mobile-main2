@@ -3,8 +3,7 @@ import 'package:ausy/core/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class CustomImage extends StatelessWidget {
-  const CustomImage(
-    this.image, {
+  const CustomImage(this.image, {
     super.key,
     this.width = 100,
     this.height = 100,
@@ -13,7 +12,6 @@ class CustomImage extends StatelessWidget {
     this.borderColor,
     this.trBackground = false,
     this.fit = BoxFit.cover,
-    this.isNetwork = true,
     this.radius = 50,
     this.borderRadius,
     this.isShadow = true,
@@ -27,67 +25,36 @@ class CustomImage extends StatelessWidget {
   final Color? borderColor;
   final Color? bgColor;
   final bool trBackground;
-  final bool isNetwork;
   final double radius;
   final BorderRadiusGeometry? borderRadius;
   final BoxFit fit;
 
+  bool get _isNetwork =>
+      image.startsWith('http');
+
+  @override
   @override
   Widget build(BuildContext context) {
+    final bool isUrl = image.startsWith('http');
+
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: bgColor,
         borderRadius: borderRadius ?? BorderRadius.circular(radius),
-        boxShadow: [
-          if (isShadow)
-            BoxShadow(
-              color: AppColor.shadowColor.withValues(alpha: 0.1),
-              spreadRadius: 1,
-              blurRadius: 1,
-              offset: const Offset(0, 1), // changes position of shadow
-            ),
-        ],
       ),
-      child: isNetwork
-          ? _buildNetworkImage()
-          : Image(
-              image: AssetImage(image),
-              fit: fit,
-            ),
-    );
-  }
-
-  Widget _buildNetworkImage() {
-    return CachedNetworkImage(
-      imageUrl: image,
-      placeholder: (context, url) => const BlankImageWidget(),
-      errorWidget: (context, url, error) => const BlankImageWidget(),
-      imageBuilder: (context, imageProvider) => Container(
-        decoration: BoxDecoration(
-          borderRadius: borderRadius ?? BorderRadius.circular(radius),
-          image: DecorationImage(image: imageProvider, fit: fit),
-        ),
+      child: isUrl
+          ? CachedNetworkImage(
+        imageUrl: image,
+        fit: fit,
+        placeholder: (_, __) => const SizedBox(),
+        errorWidget: (_, __, ___) =>
+        const Icon(Icons.broken_image),
+      )
+          : Image.asset(
+        image,
+        fit: fit,
       ),
-    );
-  }
-}
-
-class BlankImageWidget extends StatefulWidget {
-  const BlankImageWidget({super.key});
-
-  @override
-  BlankImageWidgetState createState() => BlankImageWidgetState();
-}
-
-class BlankImageWidgetState extends State<BlankImageWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return const Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      elevation: 0.0,
     );
   }
 }

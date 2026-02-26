@@ -29,7 +29,7 @@ class CustomerHeader extends StatelessWidget {
                 radius: 26,
                 fit: fit,
                 isShadow: true,
-                isNetwork: false,
+
               ),
               const SizedBox(
                 width: 10.0,

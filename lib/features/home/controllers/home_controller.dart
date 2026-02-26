@@ -25,7 +25,7 @@ class HomeController extends GetxController {
 
   final List<Widget> pages = [
     const CustomerPage(),
-    const BlogPage(),
+    BlogPage(),
     const HistoryPage(),
     const ComplaintPage(),
     const SettingsPage(),

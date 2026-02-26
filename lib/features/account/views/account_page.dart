@@ -93,7 +93,7 @@ class SettingsPageState extends State<SettingsPage> {
                       height: 38,
                       radius: 19,
                       fit: BoxFit.fitWidth,
-                      isNetwork: accountController.customer.value?.profilePicture.startsWith('http') == true,
+
                     ),
 
                     const SizedBox(

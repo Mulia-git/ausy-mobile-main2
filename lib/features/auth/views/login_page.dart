@@ -3,6 +3,7 @@ import 'package:ausy/core/widgets/custom_textbox.dart';
 import 'package:ausy/features/auth/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginPage extends StatelessWidget {
   final AuthController authController =
@@ -179,6 +180,22 @@ class LoginPage extends StatelessWidget {
                                     //   width: double.infinity,
                                     //   margin: const EdgeInsets.only(bottom: 20),
                                     //   child: GestureDetector(
+                                    //     onTap: () => _showNikModal(context),
+                                    //     child: const Text(
+                                    //       "Lupa No Rekam Medis / NIK?",
+                                    //       textAlign: TextAlign.right,
+                                    //       style: TextStyle(
+                                    //         fontWeight: FontWeight.bold,
+                                    //         color: AppColor.primary,
+                                    //         fontSize: 14,
+                                    //       ),
+                                    //     ),
+                                    //   ),
+                                    // ),
+                                    // Container(
+                                    //   width: double.infinity,
+                                    //   margin: const EdgeInsets.only(bottom: 20),
+                                    //   child: GestureDetector(
                                     //     onTap: () {
                                     //       Get.toNamed('/forgot');
                                     //     },
@@ -299,4 +316,143 @@ class LoginPage extends StatelessWidget {
       ),
     );
   }
+}
+void _showNikModal(BuildContext context) {
+  final TextEditingController nikController = TextEditingController();
+  final TextEditingController namaController = TextEditingController();
+  final TextEditingController waController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  Get.bottomSheet(
+    Container(
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Form(
+        key: formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Bantuan Lupa No RM / NIK",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              const Text("Isi data berikut untuk membantu pencarian data Anda."),
+              const SizedBox(height: 16),
+
+              /// NAMA
+              CustomTextBox(
+                hint: "Nama Lengkap",
+                keyboardType: TextInputType.name,
+                controller: namaController,
+                prefix: const Icon(Icons.person_outline, size: 16),
+                validator: (value) =>
+                value == null || value.isEmpty ? "Nama wajib diisi" : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              /// NIK
+              CustomTextBox(
+                hint: "NIK (16 digit)",
+                keyboardType: TextInputType.number,
+                controller: nikController,
+                prefix: const Icon(Icons.badge_outlined, size: 16),
+                validator: (value) {
+                  if (value == null || value.isEmpty) return "NIK wajib diisi";
+                  if (value.length != 16) return "NIK harus 16 digit";
+                  if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                    return "NIK hanya angka";
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              /// NO WA
+              CustomTextBox(
+                hint: "No WhatsApp",
+                keyboardType: TextInputType.phone,
+                controller: waController,
+                prefix: const Icon(Icons.phone_outlined, size: 16),
+                validator: (value) {
+                  if (value == null || value.isEmpty) return "No WA wajib diisi";
+                  if (value.length < 10) return "No WA tidak valid";
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              /// EMAIL
+              CustomTextBox(
+                hint: "Email",
+                keyboardType: TextInputType.emailAddress,
+                controller: emailController,
+                prefix: const Icon(Icons.email_outlined, size: 16),
+                validator: (value) {
+                  if (value == null || value.isEmpty) return "Email wajib diisi";
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    return "Format email tidak valid";
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                height: 45,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.primary,
+                  ),
+                  onPressed: () {
+                    if (formKey.currentState!.validate()) {
+                      _openWhatsApp(
+                        namaController.text,
+                        nikController.text,
+                        waController.text,
+                        emailController.text,
+                      );
+                    }
+                  },
+                  child: const Text(
+                    "Lanjut via WhatsApp",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+void _openWhatsApp(String nama, String nik, String wa, String email) async {
+  const String adminNumber = '08975520000';
+
+  final String message = '''
+Halo Admin RS Aura Syifa,
+Saya ingin daftar akun.
+
+Nama  : $nama
+NIK   : $nik
+No WA : $wa
+Email : $email
+''';
+
+  final Uri url = Uri.parse(
+      "https://wa.me/$adminNumber?text=${Uri.encodeComponent(message)}");
+
+  await launchUrl(url, mode: LaunchMode.externalApplication);
 }
