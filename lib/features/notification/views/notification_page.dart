@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide Notification;
 import 'package:get/get.dart';
+
 import '../controllers/notification_controller.dart';
 import '../../../core/models/notification.dart';
 import 'NotificationDetailPage.dart';
@@ -58,7 +59,6 @@ class NotificationPage extends StatelessWidget {
               return InkWell(
                 onTap: () async {
                   await controller.markAsRead(notif.id);
-
                   Get.to(() => NotificationDetailPage(notif: notif));
                 },
                 borderRadius: BorderRadius.circular(12),
@@ -78,6 +78,7 @@ class NotificationPage extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      /// ICON
                       Stack(
                         children: [
                           Icon(
@@ -101,11 +102,15 @@ class NotificationPage extends StatelessWidget {
                             ),
                         ],
                       ),
+
                       const SizedBox(width: 12),
+
+                      /// TEXT
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            /// TITLE
                             Text(
                               notif.judul,
                               style: TextStyle(
@@ -115,7 +120,10 @@ class NotificationPage extends StatelessWidget {
                                 fontSize: 14,
                               ),
                             ),
+
                             const SizedBox(height: 4),
+
+                            /// PESAN
                             Text(
                               shortText(notif.pesan),
                               style: TextStyle(
@@ -123,6 +131,18 @@ class NotificationPage extends StatelessWidget {
                                 color: Colors.grey[700],
                               ),
                             ),
+
+                            const SizedBox(height: 6),
+
+                            /// TANGGAL (langsung dari API)
+                            if (notif.tanggal.isNotEmpty)
+                              Text(
+                                notif.tanggal,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                ),
+                              ),
                           ],
                         ),
                       ),

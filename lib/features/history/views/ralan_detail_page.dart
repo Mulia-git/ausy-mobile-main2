@@ -1,7 +1,12 @@
 import 'package:ausy/core/models/lab_detail.dart';
+import 'package:ausy/features/history/views/surat_preview_page.dart';
+import 'package:ausy/features/history/views/surat_sakit_preview_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ausy/core/models/outpatient.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/models/surat_model.dart';
+import '../../../core/services/SuratService.dart';
 import '../controllers/history_controller.dart';
 import 'package:flutter/services.dart';
 
@@ -15,28 +20,25 @@ class RalanDetailPage extends StatefulWidget {
 class _RalanDetailPageState extends State<RalanDetailPage> {
   late Outpatient data;
 
-  final HistoryController historyController =
-  Get.put(HistoryController(), permanent: true);
+  final SuratService suratService = SuratService();
+
+  final HistoryController historyController = Get.find(); // FIX
 
   @override
   void initState() {
     super.initState();
 
-
     data = Get.arguments as Outpatient;
 
-
     historyController.loadSoap(data.code);
-    if(data.payment == "BPJS KESEHATAN"){
-      historyController.loadSep(data.code);
-
-    }
     historyController.loadDiagnosaProsedur(data.code);
     historyController.loadTindakan(data.code);
     historyController.loadObat(data.code);
     historyController.loadLab(data.code);
     historyController.loadRadiologi(data.code);
-
+    historyController.loadSurat(data.code);
+    historyController.loadSuratSakit(data.code);
+    print("SURAT UI: ${historyController.suratData.value}");
   }
 
   @override
@@ -67,6 +69,102 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
             _infoTile("Dokter", data.doctor, Icons.person),
             _infoTile("Cara Bayar", data.payment, Icons.payment),
 
+
+            Obx(() {
+
+              final surat = historyController.suratData.value;
+
+              if (surat == null) return const SizedBox();
+
+              final url =
+                  "https://apam.rsaurasyifa.com/api/apam/"
+                  "?action=surat_keterangan_sehat_pdf"
+                  "&no_rawat=${Uri.encodeComponent(data.code)}"
+                  "&token=${Uri.encodeComponent(ApiConstants.token)}";
+
+
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 12),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    side: const BorderSide(
+                      color: Colors.red,
+                      width: 1.5,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    Get.to(() => SuratPreviewPage(
+                      pdfUrl: url,
+                    ));
+
+                  },
+                  icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                  label: const Text(
+                    "Lihat Surat Keterangan Sehat",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              );
+            }),
+            Obx(() {
+
+              final surat = historyController.suratSakit.value;
+
+              if (surat == null) return const SizedBox();
+
+              final url =
+                  "https://apam.rsaurasyifa.com/api/apam/"
+                  "?action=surat_keterangan_sakit_pdf"
+                  "&no_rawat=${Uri.encodeComponent(data.code)}"
+                  "&token=${Uri.encodeComponent(ApiConstants.token)}";
+
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 12),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    side: const BorderSide(
+                      color: Colors.red,
+                      width: 1.5,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+
+                    Get.to(() => SuratSakitPreviewPage(
+                      pdfUrl: url,
+                    ));
+
+                  },
+                  icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                  label: const Text(
+                    "Lihat Surat Keterangan Sakit",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              );
+
+            }),
             const SizedBox(height: 20),
 
             /// ================= SOAP =================

@@ -4,6 +4,7 @@ import 'package:ausy/core/themes/app_colors.dart';
 import 'package:ausy/core/widgets/custom_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
 
 class BlogDetailPage extends StatelessWidget {
@@ -54,13 +55,28 @@ class BlogDetailPage extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   if (blog.image.isNotEmpty)
-                    CustomImage(
-                      blog.image,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ImageViewer(
+                              imageUrl: blog.image,
+                              tag: "blogImage${blog.id}",
+                            ),
+                          ),
+                        );
+                      },
+                      child: Hero(
+                        tag: "blogImage${blog.id}",
+                        child: CustomImage(
+                          blog.image,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
+                      ),
                     ),
-
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
@@ -139,24 +155,67 @@ class BlogDetailPage extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   /// HTML CONTENT
-                  Html(
-                    data: blog.content,
-                    style: {
-                      "body": Style(
-                        fontSize: FontSize(16),
-                        lineHeight: LineHeight(1.7),
-                        color: AppColor.textColor,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: blog.content
+                        .split('\n\n')
+                        .map(
+                          (paragraph) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          paragraph.trim(),
+                          textAlign: TextAlign.justify,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            height: 1.8,
+                            color: AppColor.textColor,
+                          ),
+                        ),
                       ),
-                      "p": Style(
-                        margin: Margins.only(bottom: 16),
-                      ),
-                      "b": Style(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    },
+                    )
+                        .toList(),
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ImageViewer extends StatelessWidget {
+  final String imageUrl;
+  final String tag;
+
+  const ImageViewer({
+    super.key,
+    required this.imageUrl,
+    required this.tag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+
+          PhotoView(
+            heroAttributes: PhotoViewHeroAttributes(tag: tag),
+            imageProvider: NetworkImage(imageUrl),
+            minScale: PhotoViewComputedScale.contained,
+            maxScale: PhotoViewComputedScale.covered * 4,
+            backgroundDecoration: const BoxDecoration(
+              color: Colors.black,
+            ),
+          ),
+
+          SafeArea(
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
         ],

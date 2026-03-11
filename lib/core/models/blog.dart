@@ -42,13 +42,20 @@ class Blog {
   }
 
   static String _removeHtml(String htmlString) {
+
+    // ubah br dan p jadi line break
+    htmlString = htmlString
+        .replaceAll("<br>", "\n")
+        .replaceAll("<br/>", "\n")
+        .replaceAll("<br />", "\n")
+        .replaceAll("</p>", "\n\n");
+
     final document = parse(htmlString);
+
     return document.body?.text
-        .replaceAll('\n', ' ')
-        .replaceAll('\r', ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim() ??
-        '';
+        .replaceAll('\r', '')
+        .replaceAll(RegExp(r'\n\s*\n'), '\n\n')
+        .trim() ?? '';
   }
   String get shortContent {
     final text = excerpt.isNotEmpty ? excerpt : content;

@@ -4,6 +4,7 @@ class Notification {
   final String pesan;
   final String tipe;
   final String url;
+  final String tanggal; // STRING saja
 
   Notification({
     required this.id,
@@ -11,6 +12,7 @@ class Notification {
     required this.pesan,
     required this.tipe,
     required this.url,
+    required this.tanggal,
   });
 
   factory Notification.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class Notification {
       pesan: json['pesan'] ?? '',
       tipe: json['tipe'] ?? '',
       url: json['url'] ?? '',
+      tanggal: json['tanggal'] ?? '',
     );
   }
 }

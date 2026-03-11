@@ -16,7 +16,12 @@ class NotificationController extends GetxController {
   /// loading
   final RxBool isLoading = false.obs;
 
-
+  @override
+  void onInit() {
+    super.onInit();
+    _loadReadIds();
+    fetchNotifications();
+  }
 
 
 
@@ -73,7 +78,9 @@ class NotificationController extends GetxController {
   void _saveReadIds() {
     storage.write('read_notification_ids', readIds.toList());
   }
-
+  bool isExpired(Notification notif) {
+    return false; // tidak dipakai lagi karena tanggal sudah string
+  }
   /// load status read dari local storage
   void _loadReadIds() {
     final saved = storage.read<List>('read_notification_ids');
@@ -85,9 +92,5 @@ class NotificationController extends GetxController {
   int get notificationCount =>
       notifications.where((n) => !readIds.contains(n.id)).length;
 
-  @override
-  void onInit() {
-    super.onInit();
-    fetchNotifications();
-  }
+
 }

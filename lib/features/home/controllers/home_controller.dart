@@ -27,7 +27,7 @@ class HomeController extends GetxController {
     const CustomerPage(),
     BlogPage(),
     const HistoryPage(),
-    const ComplaintPage(),
+    const HistoryPage(),
     const SettingsPage(),
   ];
 

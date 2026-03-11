@@ -11,6 +11,7 @@ import 'package:ausy/core/services/outpatient_service.dart';
 import 'package:get/get.dart';
 
 import '../../../core/constants/api_constants.dart';
+import '../../../core/models/SuratSakit.dart';
 import '../../../core/models/diagnosa_model.dart';
 import '../../../core/models/lab_item.dart';
 
@@ -20,6 +21,7 @@ import '../../../core/models/prosedure_model.dart';
 import '../../../core/models/radiologi_model.dart';
 import '../../../core/models/sep_bpjs.dart';
 import '../../../core/models/soap_model.dart';
+import '../../../core/models/surat_model.dart';
 import '../../../core/models/tindakan_model.dart';
 import '../../../core/models/tindakan_ranap_dokter.dart';
 import '../../../core/services/diagnosa_service.dart';
@@ -65,10 +67,12 @@ class HistoryController extends GetxController {
   final ObatService _obatService = ObatService();
   var tindakanRanapDokterList = <TindakanRanapDokter>[].obs;
   final _tindakanRanapDokterService = TindakanRanapDokterService();
-
+  var suratData = Rx<SuratKeterangan?>(null);
+  var isLoadingSurat = false.obs;
   final _labService = LabService();
   var radiologiData = Rx<RadiologiModel?>(null);
   final _radiologiService = RadiologiService();
+  var suratSakit = Rx<SuratSakit?>(null);
 
   // Ambil data dokter berdasarkan tanggal
   Future<void> loadBilling() async {
@@ -286,4 +290,69 @@ class HistoryController extends GetxController {
     operasiData.value = await _operasiService.fetchOperasi(noRawat);
   }
 
+  Future<void> loadSurat(String noRawat) async {
+    try {
+      isLoadingSurat.value = true;
+      suratData.value = null;
+
+      final response = await _dioService.dio.get(
+        ApiConstants.baseUrl,
+        queryParameters: {
+          'action': 'surat_keterangan_sehat',
+          'no_rawat': noRawat,
+        },
+      );
+
+      print("SURAT RESPONSE RAW: ${response.data}");
+
+      if (response.statusCode == 200) {
+
+        final data = jsonDecode(response.data); // 🔥 ini yang kurang
+
+        print("SURAT DECODE: $data");
+
+        if (data != null && data is List && data.isNotEmpty) {
+
+          suratData.value = SuratKeterangan.fromJson(data[0]);
+
+          print("SURAT TERISI: ${suratData.value?.pdfUrl}");
+        }
+      }
+
+    } catch (e) {
+      print("ERROR SURAT: $e");
+    } finally {
+      isLoadingSurat.value = false;
+    }
+  }
+  Future<void> loadSuratSakit(String noRawat) async {
+    try {
+      final response = await _dioService.dio.get(
+        ApiConstants.baseUrl,
+        queryParameters: {
+          "action": "surat_keterangan_sakit",
+          "no_rawat": noRawat,
+        },
+      );
+
+      print("SURAT SAKIT RESPONSE: ${response.data}");
+
+      dynamic data = response.data;
+
+      // jika response berupa string JSON
+      if (data is String) {
+        data = jsonDecode(data);
+      }
+
+      if (data != null && data is List && data.isNotEmpty) {
+        suratSakit.value = SuratSakit.fromJson(data[0]);
+
+        print("SURAT SAKIT TERISI: ${suratSakit.value?.pdfUrl}");
+      } else {
+        print("SURAT SAKIT KOSONG");
+      }
+    } catch (e) {
+      print("ERROR SURAT SAKIT: $e");
+    }
+  }
 }

@@ -32,6 +32,7 @@ class NotificationService {
           "pesan": e["pesan"] ?? "",
           "tipe": e["tipe"] ?? "",
           "url": e["url"] ?? "",
+          "tanggal": e["tanggal"] ?? "",
         });
       }).toList();
     } catch (e, s) {

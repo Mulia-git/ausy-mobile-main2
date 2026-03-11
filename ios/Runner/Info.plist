@@ -62,5 +62,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	   <key>FirebaseAppDelegateProxyEnabled</key>
+        <true/>
+
+        <key>NSUserNotificationAlertStyle</key>
+        <string>alert</string>
+
+        <key>LSApplicationQueriesSchemes</key>
+        <array>
+            <string>tel</string>
+            <string>mailto</string>
+        </array>
+        <key>FlutterDeepLinkingEnabled</key>
+        <true/>
 </dict>
 </plist>

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ausy/features/customer/views/widgets/category_list.dart';
 import 'package:ausy/features/customer/views/widgets/doctor_item.dart';
 import 'package:ausy/features/customer/views/widgets/notification_box.dart';
@@ -8,10 +10,13 @@ import 'package:ausy/features/blog/controllers/blog_controller.dart';
 // import 'package:ausy/features/customer/views/widgets/category_box.dart';
 import 'package:ausy/features/customer/views/widgets/blog_item.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:carousel_slider/carousel_options.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../blog/views/widgets/blog_item.dart';
 import '../../book/controllers/book_controller.dart';
@@ -36,6 +41,9 @@ class CustomerPageState extends State<CustomerPage> {
       Get.put(BlogController(), permanent: true);
   final DoctorController doctorController =
       Get.put(DoctorController(), permanent: true);
+  int _currentArticle = 0;
+  final ScrollController _scrollController = ScrollController();
+  Timer? _autoScrollTimer;
   @override
   void initState() {
     super.initState();
@@ -60,6 +68,25 @@ class CustomerPageState extends State<CustomerPage> {
 
         );
       }
+    });
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+
+      if (!_scrollController.hasClients) return;
+
+      double maxScroll = _scrollController.position.maxScrollExtent;
+      double current = _scrollController.offset;
+
+      double next = current + 260;
+
+      if (next >= maxScroll) {
+        next = 0;
+      }
+
+      _scrollController.animateTo(
+        next,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
     });
   }
 
@@ -421,7 +448,8 @@ class CustomerPageState extends State<CustomerPage> {
                                 ),
                               ),
                             )
-                                : SingleChildScrollView(
+                                :SingleChildScrollView(
+                              controller: _scrollController,
                               padding: const EdgeInsets.fromLTRB(15, 5, 0, 5),
                               scrollDirection: Axis.horizontal,
                               child: Row(
@@ -483,7 +511,7 @@ class CustomerPageState extends State<CustomerPage> {
                           ),
 
                           Obx(() {
-                            /// 🔄 LOADING
+
                             if (blogController.isLoading.value) {
                               return Padding(
                                 padding: const EdgeInsets.fromLTRB(15, 0, 15, 10),
@@ -502,7 +530,7 @@ class CustomerPageState extends State<CustomerPage> {
                               );
                             }
 
-                            /// ❌ DATA KOSONG
+
                             if (blogController.blogs.isEmpty) {
                               return Container(
                                 padding: const EdgeInsets.symmetric(vertical: 30),
@@ -528,26 +556,55 @@ class CustomerPageState extends State<CustomerPage> {
                               );
                             }
 
-                            /// ✅ ADA DATA
-                            return SingleChildScrollView(
-                              padding: const EdgeInsets.fromLTRB(15, 5, 0, 5),
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: List.generate(
-                                  blogController.blogs.length > 3
-                                      ? 3
+
+                            return Column(
+                              children: [
+
+                                CarouselSlider.builder(
+                                  itemCount: blogController.blogs.length > 5
+                                      ? 5
                                       : blogController.blogs.length,
-                                      (index) => Padding(
-                                    padding: const EdgeInsets.only(right: 10),
-                                    child: SizedBox(
-                                      width: 260,
-                                      child: BlogItem(
-                                        data: blogController.blogs[index],
-                                      ),
-                                    ),
+                                  itemBuilder: (context, index, realIndex) {
+
+                                    final blog = blogController.blogs[index];
+
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                                      child: BlogItem(data: blog),
+                                    );
+                                  },
+                                  options: CarouselOptions(
+                                    height: 180,
+                                    viewportFraction: 0.85,
+                                    enlargeCenterPage: true,
+                                    autoPlay: true,
+                                    autoPlayInterval: const Duration(seconds: 4),
+                                    autoPlayAnimationDuration: const Duration(milliseconds: 800),
+                                    enableInfiniteScroll: true,
+                                    onPageChanged: (index, reason) {
+                                      setState(() {
+                                        _currentArticle = index;
+                                      });
+                                    },
                                   ),
                                 ),
-                              ),
+
+                                const SizedBox(height: 10),
+
+                                AnimatedSmoothIndicator(
+                                  activeIndex: _currentArticle,
+                                  count: blogController.blogs.length > 5
+                                      ? 5
+                                      : blogController.blogs.length,
+                                  effect: ExpandingDotsEffect(
+                                    dotHeight: 7,
+                                    dotWidth: 7,
+                                    activeDotColor: AppColor.primary,
+                                    dotColor: Colors.grey.shade300,
+                                  ),
+                                ),
+
+                              ],
                             );
                           }),
                         ],
@@ -584,5 +641,10 @@ class CustomerPageState extends State<CustomerPage> {
         ),
       );
     }
-
+  @override
+  void dispose() {
+    _autoScrollTimer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
 }
