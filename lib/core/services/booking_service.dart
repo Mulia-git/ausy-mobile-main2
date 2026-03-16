@@ -52,7 +52,7 @@ class BookingService {
     }
     return null;
   }
-  Future<Booking?> fetchActiveBooking(String medicalRecord) async {
+  Future<List<Booking>> fetchActiveBooking(String medicalRecord) async {
     try {
       final response = await _dioService.dio.post(
         ApiConstants.baseUrl,
@@ -64,14 +64,23 @@ class BookingService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.data);
-        if (data != null && data.isNotEmpty) {
-          return Booking.fromJson(data);
+
+        if (data != null) {
+
+          if (data is List) {
+            return Booking.fromJsonList(data);
+          }
+
+          if (data is Map) {
+            return [
+              Booking.fromJson(Map<String, dynamic>.from(data))
+            ];
+          }
         }
       }
-    } catch (e) {
+    } catch (e) {}
 
-    }
-    return null;
+    return [];
   }
   Future<Booking?> fetchBookingSuccess(String date,String code) async {
     try {

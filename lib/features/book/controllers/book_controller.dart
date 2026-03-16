@@ -21,7 +21,7 @@ class BookController extends GetxController {
   RxString selectedDoctorId = ''.obs;
   RxBool autoSelectDoctor = false.obs;
   RxBool hasActiveBooking = false.obs;
-  Rxn<Booking> activeBooking = Rxn<Booking>();
+  RxList<Booking> activeBookings = <Booking>[].obs;
 
 
   RxBool isLoading = false.obs;
@@ -54,23 +54,20 @@ class BookController extends GetxController {
       isCheckingBooking.value = true;
 
       final medicalRecord = storage.read('medicalRecord') ?? '';
-      final booking = await _bookingService.fetchActiveBooking(medicalRecord);
+      final bookings =
+      await _bookingService.fetchActiveBooking(medicalRecord);
 
-      if (booking != null) {
-        activeBooking.value = booking;
-        hasActiveBooking.value = true;
+      if (bookings.isNotEmpty) {
+        activeBookings.assignAll(bookings);
       } else {
-        activeBooking.value = null;
-        hasActiveBooking.value = false;
+        activeBookings.clear();
       }
     } catch (e) {
-      activeBooking.value = null;
-      hasActiveBooking.value = false;
+      activeBookings.clear();
     } finally {
-      isCheckingBooking.value = false; // 🔥 selesai loading
+      isCheckingBooking.value = false;
     }
   }
-
 
 
   Future<void> loadDoctors() async {

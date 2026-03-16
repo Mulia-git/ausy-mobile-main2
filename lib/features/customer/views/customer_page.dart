@@ -42,6 +42,7 @@ class CustomerPageState extends State<CustomerPage> {
   final DoctorController doctorController =
       Get.put(DoctorController(), permanent: true);
   int _currentArticle = 0;
+  int _currentBooking = 0;
   final ScrollController _scrollController = ScrollController();
   Timer? _autoScrollTimer;
   @override
@@ -242,136 +243,71 @@ class CustomerPageState extends State<CustomerPage> {
                                   children: [
                                     const SizedBox(height: 28),
                                     Obx(() {
-                                      final booking = bookController
-                                          .activeBooking.value;
-                                      final hasBooking = booking != null;
-                                      final isLoading = bookController
-                                          .isCheckingBooking.value;
+                                      final bookings = bookController.activeBookings;
+                                      final isLoading = bookController.isCheckingBooking.value;
 
-                                      return Stack(
-                                        clipBehavior: Clip.none,
+                                      if (isLoading) {
+                                        return const SizedBox(
+                                          height: 120,
+                                          child: Center(child: CircularProgressIndicator()),
+                                        );
+                                      }
+
+                                      /// tidak ada booking
+                                      if (bookings.isEmpty) {
+                                        return _buildRegisterCard(context);
+                                      }
+
+                                      /// jika hanya 1 booking
+                                      if (bookings.length == 1) {
+                                        final booking = bookings.first;
+                                        return _buildBookingCard(context, booking);
+                                      }
+
+                                      /// jika lebih dari 1 booking
+                                      return Column(
                                         children: [
-                                          Container(
-                                            width: double.infinity,
-                                            padding: EdgeInsets.fromLTRB(
-                                              16,
-                                              16,
-                                              16,
-                                              MediaQuery
-                                                  .of(context)
-                                                  .size
-                                                  .height < 700 ? 64 : 56,
-                                            ),
-                                            margin: const EdgeInsets.only(
-                                                bottom: 20),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFf3f9f6),
-                                              borderRadius: BorderRadius
-                                                  .circular(12),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black
-                                                      .withValues(alpha: 0.1),
-                                                  blurRadius: 10,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment
-                                                  .start,
-                                              children: [
-                                                Text(
-                                                  isLoading
-                                                      ? "Status Pendaftaran"
-                                                      : hasBooking
-                                                      ? "Status Pendaftaran"
-                                                      : "Daftar Mandiri",
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: AppColor.textColor,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 10),
-                                                Text(
-                                                  isLoading
-                                                      ? "Sedang mengambil data..."
-                                                      : hasBooking
-                                                      ? "Anda sudah terdaftar pada tanggal ${booking
-                                                      .checkDate} "
-                                                      "di poli ${booking
-                                                      .polyclinic} ke dokter ${booking
-                                                      .doctor}"
-                                                      : "Silahkan lakukan pendaftaran mandiri klinik rawat jalan.",
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                ),
-                                              ],
+
+                                          CarouselSlider.builder(
+                                            itemCount: bookings.length,
+                                            itemBuilder: (context, index, realIndex) {
+
+                                              final booking = bookings[index];
+
+                                              return _buildBookingCard(context, booking);
+
+                                            },
+                                            options: CarouselOptions(
+                                              aspectRatio: 16 / 9,
+                                              viewportFraction: 1,
+                                              autoPlay: bookings.length > 1,
+                                              height: 200,
+
+                                              autoPlayInterval: const Duration(seconds: 4),
+                                              enlargeCenterPage: false,
+                                              onPageChanged: (index, reason) {
+                                                setState(() {
+                                                  _currentBooking = index;
+                                                });
+                                              },
                                             ),
                                           ),
 
-                                          if (!isLoading)
-                                            Positioned(
-                                              bottom: 0,
-                                              right: 15,
-                                              child: ElevatedButton(
-                                                onPressed: () {
-                                                  if (hasBooking) {
-                                                    Get.toNamed('/bookdetail',
-                                                        arguments: {
-                                                          'date': booking!
-                                                              .checkDate,
-                                                          'code': booking.code,
-                                                        });
-                                                  } else {
-                                                    Get.toNamed('/app');
-                                                  }
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                  hasBooking
-                                                      ? Colors.blueGrey
-                                                      : const Color(0xFF63B790),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius
-                                                        .circular(10),
-                                                  ),
-                                                ),
-                                                child: Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(vertical: 10),
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(
-                                                        hasBooking
-                                                            ? Icons.receipt_long
-                                                            : Icons
-                                                            .app_registration_rounded,
-                                                        size: 16,
-                                                        color: Colors.white,
-                                                      ),
-                                                      const SizedBox(width: 5),
-                                                      Text(
-                                                        hasBooking
-                                                            ? "Detail"
-                                                            : "Daftar",
-                                                        style: const TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 14,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
+                                          const SizedBox(height: 8),
+
+                                          AnimatedSmoothIndicator(
+                                            activeIndex: _currentBooking,
+                                            count: bookings.length,
+                                            effect: ExpandingDotsEffect(
+                                              dotHeight: 7,
+                                              dotWidth: 7,
+                                              activeDotColor: AppColor.primary,
+                                              dotColor: Colors.grey.shade300,
                                             ),
+                                          ),
                                         ],
                                       );
                                     }),
-
                                     const SizedBox(height: 10),
                                   ],
                                 )
@@ -617,6 +553,102 @@ class CustomerPageState extends State<CustomerPage> {
         ),
       );
     }
+  Widget _buildBookingCard(BuildContext context, booking) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFf3f9f6),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          const Text(
+            "Status Pendaftaran",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColor.textColor,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Text(
+            "Anda terdaftar pada tanggal ${booking.checkDate} "
+                "di poli ${booking.polyclinic} ke dokter ${booking.doctor}",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          /// BUTTONS
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+
+              /// DAFTAR
+              ElevatedButton.icon(
+                onPressed: () {
+                  Get.toNamed('/app');
+                },
+                icon: const Icon(
+                  Icons.app_registration_rounded,
+                  size: 16,
+                ),
+                label: const Text("Daftar"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF63B790),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              /// DETAIL
+              ElevatedButton.icon(
+                onPressed: () {
+                  Get.toNamed('/bookdetail', arguments: {
+                    'date': booking.checkDate,
+                    'code': booking.code,
+                  });
+                },
+                icon: const Icon(
+                  Icons.receipt_long,
+                  size: 16,
+                ),
+                label: const Text("Detail"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueGrey,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
     void _showWarningDialog(String message) {
       Get.dialog(
         AlertDialog(
@@ -646,5 +678,90 @@ class CustomerPageState extends State<CustomerPage> {
     _autoScrollTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
+  }
+  Widget _buildRegisterCard(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            MediaQuery.of(context).size.height < 700 ? 64 : 56,
+          ),
+          margin: const EdgeInsets.only(bottom: 20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFf3f9f6),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Daftar Mandiri",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.textColor,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Silahkan lakukan pendaftaran mandiri klinik rawat jalan.",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        Positioned(
+          bottom: 0,
+          right: 15,
+          child: ElevatedButton(
+            onPressed: () {
+              Get.toNamed('/app');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF63B790),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.app_registration_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 5),
+                  Text(
+                    "Daftar",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

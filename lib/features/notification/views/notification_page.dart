@@ -134,7 +134,7 @@ class NotificationPage extends StatelessWidget {
 
                             const SizedBox(height: 6),
 
-                            /// TANGGAL (langsung dari API)
+
                             if (notif.tanggal.isNotEmpty)
                               Text(
                                 notif.tanggal,

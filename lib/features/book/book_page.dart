@@ -28,7 +28,7 @@ class BookingPageState extends State<BookPage> {
   final RxString selectedPolyclinicStart = "".obs;
   final RxString selectedPolyclinicFinish = "".obs;
 
-  late List<DateTime> next7Days;
+  late List<DateTime> next14Days;
   final ScheduleController scheduleController =
       Get.put(ScheduleController(), permanent: true);
   final BookController bookController =
@@ -39,8 +39,8 @@ class BookingPageState extends State<BookPage> {
   void initState() {
     super.initState();
 
-    next7Days = List.generate(
-      7,
+    next14Days = List.generate(
+      30,
           (index) => DateTime.now().add(Duration(days: index + 1)),
     );
 
@@ -50,7 +50,7 @@ class BookingPageState extends State<BookPage> {
     if (doctor != null) {
       final pickedDate = DateTime.parse(bookController.date.value);
 
-      selectedDateIndex = next7Days.indexWhere((d) =>
+      selectedDateIndex = next14Days.indexWhere((d) =>
       d.year == pickedDate.year &&
           d.month == pickedDate.month &&
           d.day == pickedDate.day);
@@ -67,7 +67,7 @@ class BookingPageState extends State<BookPage> {
       bookController.selectedDoctorId.value = doctor.code;
     } else {
       scheduleController.date.value =
-          DateFormat('yyyy-MM-dd').format(next7Days[0]);
+          DateFormat('yyyy-MM-dd').format(next14Days[0]);
       bookController.date.value = scheduleController.date.value;
     }
 
@@ -215,11 +215,11 @@ class BookingPageState extends State<BookPage> {
                         height: 80,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          itemCount: next7Days.length,
+                          itemCount: next14Days.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(width: 12),
                           itemBuilder: (context, index) {
-                            final date = next7Days[index];
+                            final date = next14Days[index];
                             final hari = hariIndo(date); // Sen, Sel, etc
                             final tanggal =
                                 DateFormat('dd').format(date); // 25, 26, etc

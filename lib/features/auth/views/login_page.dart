@@ -176,22 +176,22 @@ class LoginPage extends StatelessWidget {
                                       controller: nikController,
                                     ),
                                     const SizedBox(height: 20),
-                                    // Container(
-                                    //   width: double.infinity,
-                                    //   margin: const EdgeInsets.only(bottom: 20),
-                                    //   child: GestureDetector(
-                                    //     onTap: () => _showNikModal(context),
-                                    //     child: const Text(
-                                    //       "Lupa No Rekam Medis / NIK?",
-                                    //       textAlign: TextAlign.right,
-                                    //       style: TextStyle(
-                                    //         fontWeight: FontWeight.bold,
-                                    //         color: AppColor.primary,
-                                    //         fontSize: 14,
-                                    //       ),
-                                    //     ),
-                                    //   ),
-                                    // ),
+                                    Container(
+                                      width: double.infinity,
+                                      margin: const EdgeInsets.only(bottom: 20),
+                                      child: GestureDetector(
+                                        onTap: () => _showNikModal(context),
+                                        child: const Text(
+                                          "Lupa No Rekam Medis / NIK?",
+                                          textAlign: TextAlign.right,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColor.primary,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                     // Container(
                                     //   width: double.infinity,
                                     //   margin: const EdgeInsets.only(bottom: 20),

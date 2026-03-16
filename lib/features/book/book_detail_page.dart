@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:ausy/core/widgets/custom_appbar.dart';
 import 'package:ausy/features/book/controllers/book_controller.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +23,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
   final TextEditingController baseUrlController = TextEditingController();
   Map<String, String>? info;
   final GetStorage storage = GetStorage();
+  Timer? timer;
   @override
   void initState() {
     super.initState();
@@ -32,9 +36,21 @@ class _BookDetailPageState extends State<BookDetailPage> {
         bookController.showSuccessDialog("Pendaftaran berhasil");
       });
     }
+    bookController.loadBookingDetail(date, code);
+
+    timer = Timer.periodic(const Duration(seconds: 3), (_) {
+      bookController.loadBookingDetail(date, code);
+    });
+
+  }
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
   }
 
   Widget _infoRow(String label, String value) {
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -55,6 +71,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
@@ -87,27 +104,58 @@ class _BookDetailPageState extends State<BookDetailPage> {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
-                children: [
-                  // QR
-                  Column(
-                    children: [
-                      const Text(
-                        "QR Nomor Antrian",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      QrImageView(
-                        data: bookController.booking.value!.code,
-                        size: 180,
-                        backgroundColor: Colors.white,
-                      ),
-                      const SizedBox(height: 24),
-                      ...info!.entries.map((e) => _infoRow(e.key, e.value)),
-                    ],
-                  ),
+                  children: [
+                    Obx(() {
+                      final booking = bookController.booking.value;
+
+                      if (booking == null) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      /// jika sudah diverifikasi di anjungan
+                      if (booking.status == "Terdaftar") {
+                        return Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Column(
+                            children: [
+                              Icon(Icons.verified, color: Colors.green, size: 50),
+                              SizedBox(height: 10),
+                              Text(
+                                "Sudah Check-in",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      /// QR jika belum checkin
+                      final qrData =
+                          "${booking.code}|${booking.noRkmMedis}|${booking.checkDate}";
+
+                      return Column(
+                        children: [
+                          const Text(
+                            "QR Nomor Antrian",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 20),
+                          QrImageView(
+                            data: qrData,
+                            size: 180,
+                            backgroundColor: Colors.white,
+                          ),
+                        ],
+                      );
+                    }),
+
                   const SizedBox(height: 20),
                   // Note
                   const SizedBox(height: 24),

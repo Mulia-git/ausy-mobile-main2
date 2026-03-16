@@ -449,7 +449,7 @@ class HistoryPageState extends State<HistoryPage> {
     final categories = [
       'Booking',
       'Ralan',
-      // 'Ranap',
+      'Ranap',
       // 'Billing',
     ];
 
@@ -676,7 +676,7 @@ class HistoryPageState extends State<HistoryPage> {
     final categories = [
       'Booking',
       'Ralan',
-      // 'Ranap',
+      'Ranap',
       // 'Billing',
     ];
 

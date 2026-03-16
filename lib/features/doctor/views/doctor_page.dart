@@ -79,7 +79,6 @@ class _DoctorPageState extends State<DoctorPage> {
     final shifts = ['Semua', 'Pagi', 'Sore', 'Malam'];
 
     return Obx(() {
-      final hasBooking = bookController.activeBooking.value != null;
 
       return SafeArea(
         child: SingleChildScrollView(
@@ -147,11 +146,10 @@ class _DoctorPageState extends State<DoctorPage> {
                         : 'assets/images/female.png';
 
                     return Opacity(
-                      opacity: hasBooking ? 0.5 : 1,
+                      opacity:  1,
                       child: InkWell(
-                        onTap: hasBooking
-                            ? null
-                            : () {
+                        onTap:
+                             () {
                           bookController.setFromSchedule(
                             doctor: doctor,
                             date: doctorController.date.value,
@@ -210,22 +208,7 @@ class _DoctorPageState extends State<DoctorPage> {
                                 ),
                               ),
 
-                              if (hasBooking)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    borderRadius:
-                                    BorderRadius.circular(20),
-                                  ),
-                                  child: const Text(
-                                    "Booking Aktif",
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11),
-                                  ),
-                                )
+
                             ],
                           ),
                         ),
