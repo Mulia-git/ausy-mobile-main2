@@ -3,8 +3,8 @@ name: Build iOS Flutter
 on:
 push:
 branches:
-  - main
-  - master
+- main
+- master
 
 jobs:
 build-ios:
