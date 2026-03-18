@@ -74,6 +74,7 @@ class HistoryController extends GetxController {
   final _radiologiService = RadiologiService();
   var suratSakit = Rx<SuratSakit?>(null);
 
+
   // Ambil data dokter berdasarkan tanggal
   Future<void> loadBilling() async {
     isLoading.value = true;

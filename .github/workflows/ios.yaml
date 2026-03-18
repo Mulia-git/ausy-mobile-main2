@@ -1,0 +1,46 @@
+name: Build iOS Flutter (Ausy)
+
+on:
+push:
+branches:
+  - main
+  - master
+
+jobs:
+build-ios:
+runs-on: macos-latest
+  
+  ```
+steps:
+  - name: Checkout Repo
+    uses: actions/checkout@v4
+
+  - name: Setup Flutter
+    uses: subosito/flutter-action@v2
+    with:
+      flutter-version: '3.19.0'
+      cache: true
+
+  - name: Flutter Doctor
+    run: flutter doctor
+
+  - name: Install Dependencies
+    run: flutter pub get
+
+  - name: Clean Project
+    run: flutter clean
+
+  - name: Build iOS (no signing)
+    run: flutter build ios --release --no-codesign
+
+  - name: Zip .app result
+    run: |
+      cd build/ios/iphoneos
+      zip -r Runner.zip Runner.app
+
+  - name: Upload Artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: ios-build-ausy
+      path: build/ios/iphoneos/Runner.zip
+

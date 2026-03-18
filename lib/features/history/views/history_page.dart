@@ -23,6 +23,7 @@ class HistoryPageState extends State<HistoryPage> {
       Get.put(HistoryController(), permanent: true);
   TextEditingController searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+
   final RxBool showFab = false.obs;
   @override
   void initState() {
@@ -263,7 +264,7 @@ class HistoryPageState extends State<HistoryPage> {
     final categories = [
       'Booking',
       'Ralan',
-      // 'Ranap',
+      'Ranap',
       // 'Billing',
     ];
 
