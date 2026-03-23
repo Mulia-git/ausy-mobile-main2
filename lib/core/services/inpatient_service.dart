@@ -15,7 +15,7 @@ class InpatientService {
       Response response = await _dioService.dio.post(
         ApiConstants.baseUrl,
         queryParameters: {
-          'action': 'riwayat',
+          'action': 'riwayatranap',
           'no_rkm_medis' : storage.read('medicalRecord') ?? ''
         },
       );

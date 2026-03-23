@@ -1,35 +1,36 @@
-import 'package:ausy/core/models/lab_detail.dart';
 import 'package:ausy/features/history/views/surat_preview_page.dart';
 import 'package:ausy/features/history/views/surat_sakit_preview_page.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:ausy/core/models/outpatient.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../../core/models/surat_model.dart';
-import '../../../core/services/SuratService.dart';
-import '../controllers/history_controller.dart';
-import 'package:flutter/services.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
-class RalanDetailPage extends StatefulWidget {
-  const RalanDetailPage({super.key});
+import '../../../core/constants/api_constants.dart';
+import '../../../core/models/inpatient.dart';
+import '../../../core/models/lab_detail.dart';
+import '../controllers/history_controller.dart';
+
+class RanapDetailPage extends StatefulWidget {
+  const RanapDetailPage({super.key});
 
   @override
-  State<RalanDetailPage> createState() => _RalanDetailPageState();
+  State<RanapDetailPage> createState() => _RanapDetailPageState();
 }
 
-class _RalanDetailPageState extends State<RalanDetailPage> {
-  late Outpatient data;
-
-  final SuratService suratService = SuratService();
+class _RanapDetailPageState extends State<RanapDetailPage> {
+  late Inpatient data;
   final ScrollController _tabScrollController = ScrollController();
-  final HistoryController historyController = Get.find(); // FIX
+  final HistoryController historyController = Get.find();
 
   @override
   void initState() {
     super.initState();
 
-    data = Get.arguments as Outpatient;
+    data = Get.arguments as Inpatient;
 
+    /// 🔥 LOAD SEMUA DETAIL (SAMA SEPERTI RALAN)
     historyController.loadSoap(data.code);
     historyController.loadDiagnosaProsedur(data.code);
     historyController.loadTindakan(data.code);
@@ -40,14 +41,14 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
     historyController.loadSuratSakit(data.code);
     historyController.loadSep(data.code);
   }
-
   Widget build(BuildContext context) {
     return Obx(() {
       final tabs = <Tab>[];
       final views = <Widget>[];
+      print("SEP DATA: ${historyController.sepData.value}");
 
       /// ================= ISI TAB DULU =================
-
+      ///
       tabs.add(const Tab(text: "Info"));
       views.add(_buildInfoTab());
       if (historyController.soapList.isNotEmpty) {
@@ -55,8 +56,7 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
         views.add(_buildSoapTab());
       }
 
-      if (data.payment.toLowerCase().contains("bpjs") &&
-          historyController.sepData.value != null) {
+      if (historyController.sepData.value != null) {
         tabs.add(const Tab(text: "SEP"));
         views.add(_buildSepTab());
       }
@@ -174,7 +174,6 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
                 ),
               ),
 
-
               /// ================= CONTENT =================
               Expanded(
                 child: TabBarView(children: views),
@@ -185,7 +184,6 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
       );
     });
   }
-
   /// ================= WIDGET BANTU =================
   Widget _suratButton(String title, String url, {required bool isSakit}) {
     return Container(
@@ -220,7 +218,6 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
       ),
     );
   }
-
   Widget _sectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -324,7 +321,6 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
       ),
     );
   }
-
   Widget _sepRow(String title, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -380,12 +376,16 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
             title: Text("${s.tanggal} ${s.jam}"),
             subtitle: Text(s.petugas),
             children: [
+              const SizedBox(height: 8),
+
               _soapRow("Subjektif", s.subjektif),
               _soapRow("Objektif", s.objektif),
               _soapRow("Asesmen", s.asesmen),
               _soapRow("Plan", s.plan),
               _soapRow("Instruksi", s.instruksi),
               _soapRow("Evaluasi", s.evaluasi),
+
+              const SizedBox(height: 6),
             ],
           ),
         );
@@ -430,7 +430,6 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
       ),
     );
   }
-
   Widget _buildDiagnosaTab() {
     final diagnosa = historyController.diagnosaList;
     final prosedur = historyController.prosedurList;
@@ -451,10 +450,9 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
               style: TextStyle(color: Colors.grey),
             )
           else
-            ...diagnosa.map((d) =>
-                _cardItem(
-                  "${d.kode} - ${d.nama} (${d.status})",
-                )),
+            ...diagnosa.map((d) => _cardItem(
+              "${d.kode} - ${d.nama} (${d.status})",
+            )),
 
           const SizedBox(height: 20),
 
@@ -468,10 +466,9 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
               style: TextStyle(color: Colors.grey),
             )
           else
-            ...prosedur.map((p) =>
-                _cardItem(
-                  "${p.kode} - ${p.nama} (${p.status})",
-                )),
+            ...prosedur.map((p) => _cardItem(
+              "${p.kode} - ${p.nama} (${p.status})",
+            )),
         ],
       ),
     );
@@ -507,7 +504,6 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
       }).toList(),
     );
   }
-
   Widget _buildRadiologiTab() {
     final r = historyController.radiologiData.value;
 
@@ -526,15 +522,14 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
             _sectionTitle("Pemeriksaan Radiologi"),
             const SizedBox(height: 8),
 
-            ...r.pemeriksaan.map((e) =>
-                _cardItem(
-                  "${e.tanggal} ${e.jam}\n"
-                      "${e.nama}\n"
-                      "Dokter: ${e.dokter}\n"
-                      "Petugas: ${e.petugas}\n"
-                      "${e.proyeksi}\n"
-                      "Biaya: Rp ${e.biaya}",
-                )),
+            ...r.pemeriksaan.map((e) => _cardItem(
+              "${e.tanggal} ${e.jam}\n"
+                  "${e.nama}\n"
+                  "Dokter: ${e.dokter}\n"
+                  "Petugas: ${e.petugas}\n"
+                  "${e.proyeksi}\n"
+                  "Biaya: Rp ${e.biaya}",
+            )),
             const SizedBox(height: 12),
           ],
 
@@ -543,10 +538,9 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
             _sectionTitle("Hasil Radiologi"),
             const SizedBox(height: 8),
 
-            ...r.hasil.map((h) =>
-                _cardItem(
-                  "${h.tanggal} ${h.jam}\n${h.hasil}",
-                )),
+            ...r.hasil.map((h) => _cardItem(
+              "${h.tanggal} ${h.jam}\n${h.hasil}",
+            )),
             const SizedBox(height: 12),
           ],
 
@@ -555,49 +549,29 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
             _sectionTitle("Gambar Radiologi"),
             const SizedBox(height: 8),
 
-            ...r.gambar.map((g) =>
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: g.url.isNotEmpty
-                      ? ClipRRect(
+            ...r.gambar.map((g) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: g.url.isNotEmpty
+                  ? ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: GestureDetector(
+                  onTap: () {
+                    _showImagePreview(g.url);
+                  },
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: GestureDetector(
-                      onTap: () {
-                        _showImagePreview(g.url);
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          g.url,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                    child: Image.network(
+                      g.url,
+                      fit: BoxFit.cover,
                     ),
-                  )
-                      : const SizedBox(),
-                )),
+                  ),
+                ),
+              )
+                  : const SizedBox(),
+            )),
           ],
         ],
       ),
-    );
-  }
-  void _showImagePreview(String url) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.9),
-      builder: (_) {
-        return GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Center(
-              child: InteractiveViewer(
-                child: Image.network(url),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
   Widget _buildOperasiTab() {
@@ -618,32 +592,31 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
             _sectionTitle("Operasi / VK"),
             const SizedBox(height: 8),
 
-            ...o.operasi.map((op) =>
-                Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(12),
+            ...o.operasi.map((op) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${op.tanggal} - ${op.nama}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${op.tanggal} - ${op.nama}",
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text("Kode: ${op.kode}"),
-                      Text("Anestesi: ${op.anastesi}"),
+                  const SizedBox(height: 4),
+                  Text("Kode: ${op.kode}"),
+                  Text("Anestesi: ${op.anastesi}"),
 
-                      const Divider(),
+                  const Divider(),
 
-                      /// 👨‍⚕️ TIM OPERASI
-                      ...op.tim.map((t) => Text("${t.peran}: ${t.nama}")),
-                    ],
-                  ),
-                )),
+                  /// 👨‍⚕️ TIM OPERASI
+                  ...op.tim.map((t) => Text("${t.peran}: ${t.nama}")),
+                ],
+              ),
+            )),
             const SizedBox(height: 12),
           ],
 
@@ -652,22 +625,20 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
             _sectionTitle("Laporan Operasi"),
             const SizedBox(height: 8),
 
-            ...o.laporan.map((l) =>
-                _cardItem(
-                  "Tanggal: ${l.tanggal}\n"
-                      "Pre Op: ${l.preOp}\n"
-                      "Post Op: ${l.postOp}\n"
-                      "Jaringan: ${l.jaringan}\n"
-                      "Selesai: ${l.selesai}\n"
-                      "PA: ${l.pa}\n\n"
-                      "${l.laporan}",
-                )),
+            ...o.laporan.map((l) => _cardItem(
+              "Tanggal: ${l.tanggal}\n"
+                  "Pre Op: ${l.preOp}\n"
+                  "Post Op: ${l.postOp}\n"
+                  "Jaringan: ${l.jaringan}\n"
+                  "Selesai: ${l.selesai}\n"
+                  "PA: ${l.pa}\n\n"
+                  "${l.laporan}",
+            )),
           ],
         ],
       ),
     );
   }
-
   List<Widget> _buildGroupedLab(List<LabDetail> details) {
     List<Widget> widgets = [];
     String currentGroup = "";
@@ -745,12 +716,15 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
         children: [
 
           _infoTile("Nomor Rawat", data.code, Icons.numbers),
-          _infoTile("Tanggal Kunjungan", data.date, Icons.calendar_today),
-          _infoTile("Poliklinik", data.polyclinic, Icons.medical_services),
+          _infoTile("Tanggal Masuk", data.registerDate, Icons.login),
+          _infoTile("Ruang Perawatan", data.room ?? '-', Icons.bed),
+          _infoTile("Kelas", data.className ?? '-', Icons.class_),
           _infoTile("Dokter", data.doctor, Icons.person),
-          _infoTile("Cara Bayar", data.payment, Icons.payment),
+          _infoTile("Cara Bayar", data.insurance, Icons.payment),
+          _infoTile("Tanggal Keluar", data.dischargeDate ?? '-', Icons.logout),
+          _infoTile("Lama Dirawat", "${data.lama ?? '-'} hari", Icons.timelapse),
 
-          /// surat sehat
+          /// ================= SURAT SEHAT =================
           Obx(() {
             final surat = historyController.suratData.value;
             if (surat == null) return const SizedBox();
@@ -768,7 +742,7 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
             );
           }),
 
-          /// surat sakit
+          /// ================= SURAT SAKIT =================
           Obx(() {
             final surat = historyController.suratSakit.value;
             if (surat == null) return const SizedBox();
@@ -789,6 +763,27 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
       ),
     );
   }
+
+  void _showImagePreview(String url) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.9),
+      builder: (_) {
+        return GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Center(
+              child: InteractiveViewer(
+                child: Image.network(url),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 }
 Widget _labTable(List<LabDetail> details) {
   return Table(

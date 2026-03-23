@@ -11,6 +11,8 @@ import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../core/models/inpatient.dart';
+
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
 
@@ -451,228 +453,224 @@ class HistoryPageState extends State<HistoryPage> {
       'Booking',
       'Ralan',
       'Ranap',
-      // 'Billing',
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        // Search Box
+
+        /// 🔍 SEARCH
         Padding(
-          padding: const EdgeInsets.only(left: 15, right: 15, top: 0),
-          child: Row(
-            children: [
-              Expanded(
-                child: CustomTextBox(
-                  hint: "Cari",
-                  prefix: const Icon(
-                    Icons.search,
-                    color: Colors.grey,
-                    size: 16,
-                  ),
-                  controller: searchController,
-                  textInputAction: TextInputAction.search,
-                  keyboardType: TextInputType.text,
-                  onSubmitted: (value) {
-                    historyController.changeQuery(value);
-                  },
-                ),
-              ),
-            ],
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: CustomTextBox(
+            hint: "Cari",
+            prefix: const Icon(Icons.search, size: 16, color: Colors.grey),
+            controller: searchController,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (value) {
+              historyController.changeQuery(value);
+            },
           ),
         ),
 
-        // Shift Filter
+        /// 🔘 CATEGORY
         Padding(
-          padding: const EdgeInsets.only(top: 10),
+          padding: const EdgeInsets.only(top: 10, left: 15),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.only(bottom: 5, top: 5, left: 15),
             child: Row(
               children: List.generate(
                 categories.length,
-                (index) => CategoryItem(
+                    (index) => CategoryItem(
                   data: Category(id: index, name: categories[index]),
                   isSelected: categories[index] ==
                       historyController.selectedCategory.value,
                   onTap: () {
-                    setState(() {
-                      historyController.changeCategory(categories[index]);
-                    });
+                    historyController.changeCategory(categories[index]);
                   },
                 ),
               ),
             ),
           ),
         ),
-        // List of Doctors
+
+        /// 📋 LIST RANAP
         Padding(
           padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
-          child: historyController.isLoading.value
-              ? ListView.builder(
-                padding: EdgeInsets.zero,
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  itemCount: 6,
+          child: Obx(() {
+            final isLoading = historyController.isLoading.value;
+
+            /// 🔥 DATA RANAP (BENAR)
+            final data = historyController.inpatients;
+
+            /// 🔄 LOADING (AMAN - TANPA AKSES LIST)
+            if (isLoading) {
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: 6,
+                itemBuilder: (_, __) {
+                  return Shimmer.fromColors(
+                    baseColor: Colors.grey.shade300,
+                    highlightColor: Colors.grey.shade100,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      height: 90,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white,
+                      ),
+                    ),
+                  );
+                },
+              );
+            }
+
+            /// 🔍 FILTER
+            final filtered = data.where((item) {
+              final query = historyController.searchQuery.value.toLowerCase();
+
+              if (query.isEmpty) return true;
+
+              return item.code.toLowerCase().contains(query) ||
+                  item.polyclinic.toLowerCase().contains(query) ||
+                  item.doctor.toLowerCase().contains(query);
+            }).toList();
+
+            /// 📭 EMPTY
+            if (filtered.isEmpty) {
+              return _buildEmptyState(context);
+            }
+
+            /// ✅ LIST
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: filtered.length,
               itemBuilder: (context, index) {
-                final outpatient = historyController.filteredOutpatients[index];
+                final item = filtered[index];
 
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                return InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    Get.toNamed('/ranap-detail', arguments: item);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
 
-                        /// BARIS 1 → NO RAWAT & TANGGAL
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              outpatient.code, // no_rawat
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              outpatient.date, // tgl_registrasi
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        /// BARIS 2 → POLI
-                        Text(
-                          outpatient.polyclinic,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        /// BARIS 3 → DOKTER & CARA BAYAR
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                outpatient.doctor,
+                          /// 🧾 NO RAWAT & TANGGAL MASUK
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                item.code,
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
+                              Text(
+                                item.registerDate,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          /// 🏥 BANGSAL / POLI
+                          Text(
+                            item.polyclinic,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                            Container(
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          /// 👨‍⚕️ DOKTER
+                          Text(item.doctor),
+
+                          const SizedBox(height: 6),
+
+                          /// 🛏️ KAMAR & KELAS
+                          Text(
+                            "🛏️ ${item.room ?? '-'} / ${item.className ?? '-'}",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          /// 📅 TANGGAL MASUK - KELUAR
+                          Text(
+                            "📅 ${item.registerDate} - ${item.dischargeDate ?? '-'}",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          /// ⏱️ LAMA DIRAWAT
+                          Text(
+                            "🕒 Lama Dirawat: ${item.lama ?? '-'} hari",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          /// 💳 PEMBAYARAN
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Colors.green.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
-                                outpatient.payment, // png_jawab
+                                item.insurance,
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.green,
                                 ),
                               ),
-                            )
-                          ],
-                        ),
-                      ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
-              }
-
-          )
-              : historyController.filteredOutpatients.isNotEmpty
-                  ? ListView.builder(
-                    padding: EdgeInsets.zero,
-                      itemCount: historyController.filteredOutpatients.length,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemBuilder: (context, index) {
-                        final outpatient =
-                            historyController.filteredOutpatients[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            color: Colors.white,
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        outpatient.code,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        outpatient.polyclinic,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        outpatient.code,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  color: Colors.grey.shade200,
-                                )
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  : _buildEmptyState(context),
+              },
+            );
+          }),
         ),
       ],
     );
   }
-
   Column _buildOutpatient() {
     final categories = [
       'Booking',
@@ -719,7 +717,7 @@ class HistoryPageState extends State<HistoryPage> {
             child: Row(
               children: List.generate(
                 categories.length,
-                (index) => CategoryItem(
+                    (index) => CategoryItem(
                   data: Category(id: index, name: categories[index]),
                   isSelected: categories[index] ==
                       historyController.selectedCategory.value,

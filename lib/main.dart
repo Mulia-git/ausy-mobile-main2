@@ -13,6 +13,7 @@ import 'features/blog/views/blog_page.dart';
 import 'features/customer/views/antrean_apotek_page.dart';
 import 'features/customer/views/antrean_poli_page.dart';
 import 'features/customer/views/widgets/notification_box.dart';
+import 'features/history/views/RanapDetailPage.dart';
 import 'features/notification/views/notification_page.dart';
 import 'firebase_options.dart';
 import 'core/middlewares/auth_middleware.dart';
@@ -201,6 +202,10 @@ class MyAppState extends State<MyApp> {
               middlewares: [AuthMiddleware()]),
           GetPage(name: '/ralan-detail', page: () => RalanDetailPage(),
               middlewares: [AuthMiddleware()]),
+          GetPage(
+            name: '/ranap-detail',
+            page: () => const RanapDetailPage(),
+          ),
           GetPage(
             name: '/antreanPoli',
             page: () => const AntreanPoliPage(),

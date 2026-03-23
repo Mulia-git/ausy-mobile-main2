@@ -17,15 +17,16 @@ class SepService {
         },
       );
 
-      if (res.data['status'] == true) {
+      print("SEP RAW RESPONSE: ${res.data}");
+
+      if (res.data['status'] == true && res.data['sep'] != null) {
         return SepBpjs.fromJson(res.data);
       }
     } catch (e) {
-
+      print("ERROR SEP: $e");
     }
     return null;
   }
-
 
 
 }
