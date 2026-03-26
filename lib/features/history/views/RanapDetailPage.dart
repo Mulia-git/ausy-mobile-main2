@@ -40,6 +40,7 @@ class _RanapDetailPageState extends State<RanapDetailPage> {
     historyController.loadSurat(data.code);
     historyController.loadSuratSakit(data.code);
     historyController.loadSep(data.code);
+    historyController.loadResumeRanap(data.code);
   }
   Widget build(BuildContext context) {
     return Obx(() {
@@ -51,6 +52,12 @@ class _RanapDetailPageState extends State<RanapDetailPage> {
       ///
       tabs.add(const Tab(text: "Info"));
       views.add(_buildInfoTab());
+
+      if (historyController.resumeRanap.value != null) {
+        tabs.add(const Tab(text: "Resume"));
+        views.add(_buildResumeRanapTab());
+      }
+
       if (historyController.soapList.isNotEmpty) {
         tabs.add(const Tab(text: "SOAP"));
         views.add(_buildSoapTab());
@@ -185,6 +192,130 @@ class _RanapDetailPageState extends State<RanapDetailPage> {
     });
   }
   /// ================= WIDGET BANTU =================
+  ///
+  ///
+  List<String> _splitText(String text) {
+    return text
+        .split(RegExp(r'[\n,]'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+  Widget _obatItem(String text) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green.withOpacity(0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Icon(Icons.circle, size: 8, color: Colors.green),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _listSection(String title, List<String> items) {
+    if (items.isEmpty) return const SizedBox();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(title),
+        ...items.map((e) => _obatItem(e)),
+      ],
+    );
+  }
+
+  Widget _buildResumeRanapTab() {
+    return Obx(() {
+      if (historyController.isLoadingResumeRanap.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      final data = historyController.resumeRanap.value;
+      if (data == null) {
+        return const Center(child: Text("Data tidak ada"));
+      }
+      Widget _section(String title, String content) {
+        if (content.isEmpty || content == "-") {
+          return const SizedBox();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _sectionTitle(title),
+            _cardItem(content),
+          ],
+        );
+      }
+
+      return SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            /// 🔥 RINGKASAN
+            _section("Diagnosa Awal", data.diagnosaAwal),
+            _section("Alasan Masuk", data.alasan),
+
+            /// 🔥 ANAMNESA
+            _section("Keluhan Utama", data.keluhanUtama),
+            _section("Pemeriksaan Fisik", data.pemeriksaanFisik),
+            _section("Riwayat Penyakit", data.riwayatPenyakit),
+
+            /// 🔥 PENUNJANG
+            _section("Hasil Laborat", data.hasilLaborat),
+
+            /// 🔥 TINDAKAN
+            _section("Tindakan", data.tindakan),
+
+            /// 🔥 DIAGNOSA
+            _section("Diagnosa Utama", data.diagnosaUtama),
+            _listSection("Diagnosa Sekunder", data.diagnosaSekunder),
+
+            /// 🔥 PROSEDUR
+            _section("Prosedur Utama", data.prosedurUtama),
+            _listSection("Prosedur Sekunder", data.prosedurSekunder),
+
+            /// 🔥 EDUKASI
+            _listSection("Edukasi", _splitText(data.edukasi)),
+
+            /// 🔥 STATUS PULANG
+            _section("Kondisi", data.kondisi),
+            _section("Cara Keluar", data.caraKeluar),
+            _section("Kontrol", data.kontrol),
+
+            /// 🔥 OBAT RS
+            _listSection("Obat Selama RS", _splitText(data.obatDiRs)),
+
+            /// 🔥 OBAT PULANG (🔥 PALING PENTING)
+            _sectionTitle("Obat Pulang"),
+            ..._splitText(data.obatPulang).map((e) => _obatItem(e)),
+          ],
+        ),
+      );
+    });
+  }
   Widget _suratButton(String title, String url, {required bool isSakit}) {
     return Container(
       width: double.infinity,

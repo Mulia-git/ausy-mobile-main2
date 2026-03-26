@@ -39,6 +39,7 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
     historyController.loadSurat(data.code);
     historyController.loadSuratSakit(data.code);
     historyController.loadSep(data.code);
+    historyController.loadResume(data.code);
   }
 
   Widget build(BuildContext context) {
@@ -50,6 +51,12 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
 
       tabs.add(const Tab(text: "Info"));
       views.add(_buildInfoTab());
+
+      if (historyController.resumeData.value != null) {
+        tabs.add(const Tab(text: "Resume"));
+        views.add(_buildResumeTab());
+      }
+
       if (historyController.soapList.isNotEmpty) {
         tabs.add(const Tab(text: "SOAP"));
         views.add(_buildSoapTab());
@@ -113,7 +120,6 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
             children: [
 
 
-
               /// ================= TAB =================
               SizedBox(
                 height: 48,
@@ -129,7 +135,21 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
                         labelColor: Colors.green,
                         unselectedLabelColor: Colors.grey,
                         indicatorColor: Colors.green,
-                        tabs: tabs,
+                        labelStyle: const TextStyle(
+                          fontSize: 13, // kecilkan dikit
+                          fontWeight: FontWeight.w600,
+                        ),
+                        tabs: tabs.map((t) {
+                          return Tab(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                (t.text ?? ""),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
 
@@ -270,23 +290,22 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          )
-        ],
       ),
       child: Text(
-        title,
-        style: const TextStyle(fontSize: 14),
+        title.isEmpty ? "-" : title,
+        style: const TextStyle(
+          fontSize: 14,
+          height: 1.5,
+        ),
+        softWrap: true,
       ),
     );
   }
 
   Widget _soapRow(String label, String value) {
-    if (value.trim().isEmpty || value == "-") return const SizedBox();
+    if (value
+        .trim()
+        .isEmpty || value == "-") return const SizedBox();
 
     return Container(
       width: double.infinity,
@@ -300,6 +319,7 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
           /// 🔹 LABEL
           Text(
             label,
@@ -581,6 +601,7 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
       ),
     );
   }
+
   void _showImagePreview(String url) {
     showDialog(
       context: context,
@@ -600,6 +621,7 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
       },
     );
   }
+
   Widget _buildOperasiTab() {
     final o = historyController.operasiData.value;
 
@@ -788,6 +810,111 @@ class _RalanDetailPageState extends State<RalanDetailPage> {
         ],
       ),
     );
+  }
+  List<String> _parseObat(String obat) {
+    if (obat.isEmpty || obat == "-") return [];
+
+    return obat
+        .split(",")
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+  Widget _obatItem(String text) {
+    final parts = text.split(" ");
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green.withOpacity(0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.circle, size: 8, color: Colors.green),
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: const TextStyle(color: Colors.black, fontSize: 14),
+                children: [
+                  TextSpan(text: parts.first + " "),
+                  TextSpan(
+                    text: parts.sublist(1).join(" "),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildResumeTab() {
+    return Obx(() {
+      if (historyController.isLoadingResume.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      final data = historyController.resumeData.value;
+      if (data == null) {
+        return const Center(child: Text("Data resume tidak ada"));
+      }
+      final obatList = _parseObat(data.obatPulang);
+      return SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            _sectionTitle("Keluhan Utama"),
+            _cardItem(data.keluhanUtama),
+
+            _sectionTitle("Riwayat Penyakit"),
+            _cardItem(data.riwayatPenyakit),
+
+            _sectionTitle("Pemeriksaan Penunjang"),
+            _cardItem(data.pemeriksaanPenunjang),
+
+            _sectionTitle("Hasil Laborat"),
+            _cardItem(data.hasilLaborat),
+
+            _sectionTitle("Diagnosa Utama"),
+            _cardItem("${data.diagnosaUtama} (${data.kodeDiagnosaUtama})"),
+
+            if (data.diagnosaSekunder.isNotEmpty) ...[
+              _sectionTitle("Diagnosa Sekunder"),
+              ...data.diagnosaSekunder.map((e) => _cardItem(e)),
+            ],
+
+            _sectionTitle("Prosedur Utama"),
+            _cardItem("${data.prosedurUtama} (${data.kodeProsedurUtama})"),
+
+            if (data.prosedurSekunder.isNotEmpty) ...[
+              _sectionTitle("Prosedur Sekunder"),
+              ...data.prosedurSekunder.map((e) => _cardItem(e)),
+            ],
+
+            _sectionTitle("Kondisi Pulang"),
+            _cardItem(data.kondisiPulang),
+
+
+
+      _sectionTitle("Obat Pulang"),
+
+      if (obatList.isEmpty)
+      _cardItem("-")
+      else
+      ...obatList.map((e) => _obatItem(e)),
+          ],
+        ),
+      );
+    });
   }
 }
 Widget _labTable(List<LabDetail> details) {

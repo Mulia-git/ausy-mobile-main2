@@ -41,7 +41,7 @@ class BookingPageState extends State<BookPage> {
 
     next14Days = List.generate(
       30,
-          (index) => DateTime.now().add(Duration(days: index + 1)),
+          (index) => DateTime.now().add(Duration(days: index + 0)),
     );
 
     final doctor = bookController.selectedDoctor.value;

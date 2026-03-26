@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:ausy/core/constants/api_constants.dart';
 import 'package:ausy/core/models/booking.dart';
@@ -12,6 +13,9 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:ausy/core/models/doctor.dart';
+
+import '../../../core/services/qr_service.dart';
+import '../book_detail_page.dart';
 class BookController extends GetxController {
   final DioService dioService = DioService();
   final GetStorage storage = GetStorage();
@@ -30,7 +34,7 @@ class BookController extends GetxController {
   Rxn<Doctor> selectedDoctor = Rxn<Doctor>();
   RxBool fromSchedule = false.obs;
 
-
+  final QrService _qrService = QrService();
 
   RxBool isCheckingBooking = false.obs;
 
@@ -41,12 +45,19 @@ class BookController extends GetxController {
   final DoctorService _doctorService = DoctorService();
   final BookingService _bookingService = BookingService();
 
-  void loadBookingDetail(String date, String code) async {
-    isLoadingDetail.value = true;
-    booking.value = await _bookingService.fetchBookingDetail(date, code);
-    isLoadingDetail.value = false;
-  }
+  void loadBookingDetail(String date, String code, {bool silent = false}) async {
+    if (!silent) isLoadingDetail.value = true;
 
+    final result = await _bookingService.fetchBookingDetail(date, code);
+
+
+    if (booking.value?.status != result?.status ||
+        booking.value?.code != result?.code ||
+        booking.value?.checkDate != result?.checkDate) {
+      booking.value = result;
+    }
+    if (!silent) isLoadingDetail.value = false;
+  }
 
 
   Future<void> checkActiveBooking() async {
@@ -153,7 +164,56 @@ class BookController extends GetxController {
       },
     );
   }
+  String getDevice() {
+    if (Platform.isAndroid) return 'android';
+    if (Platform.isIOS) return 'ios';
+    if (Platform.isWindows) return 'windows';
+    if (Platform.isMacOS) return 'macos';
+    if (Platform.isLinux) return 'linux';
+    return 'unknown';
+  }
+  Future<void> verifyQR({
+    required String token,
+    required String expiredAt,
+    required String signature,
+    required String code,
+  }) async {
+    Get.dialog(const Center(child: CircularProgressIndicator()));
 
+    final res = await _qrService.verifyQR(
+      tokenVerif: token,
+      expiredAt: expiredAt,
+      signature: signature,
+      noReg: code,
+      noRm: storage.read('medicalRecord') ?? '',
+    );
+
+    Get.back();
+
+
+    if (res['status'] == 'success') {
+
+      Get.off(
+            () => const BookDetailPage(),
+        arguments: {
+          "code": code,
+          "date": DateTime.now().toString(),
+          "fromCheckin": true,
+        },
+      );
+
+      //
+      // Get.snackbar(
+      //   "Berhasil",
+      //   "Anda sudah check-in",
+      //   backgroundColor: Colors.green,
+      //   colorText: Colors.white,
+      // );
+
+    } else {
+      Get.snackbar("Error", res['message'] ?? "Gagal");
+    }
+  }
   Future<void> register({
     required String? date,
     required String? polyclinic,
@@ -171,7 +231,8 @@ class BookController extends GetxController {
           'no_rkm_medis': storage.read('medicalRecord') ?? '',
           'kd_poli': polyclinic,
           'kd_dokter': doctor,
-          'kd_pj': insurance
+          'kd_pj': insurance,
+          'device':getDevice()
         },
       );
 

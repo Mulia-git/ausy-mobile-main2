@@ -8,6 +8,8 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import 'ScanPage.dart';
+
 class BookDetailPage extends StatefulWidget {
   const BookDetailPage({super.key});
 
@@ -27,21 +29,25 @@ class _BookDetailPageState extends State<BookDetailPage> {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      bookController.booking.value = null;
-      bookController.loadBookingDetail(date, code);
+      if (bookController.booking.value == null) {
+        bookController.loadBookingDetail(date, code);
+      }
     });
     if (Get.arguments['fromRegister'] == true) {
       Future.delayed(const Duration(milliseconds: 400), () {
         bookController.showSuccessDialog("Pendaftaran berhasil");
       });
     }
-    bookController.loadBookingDetail(date, code);
+
 
     timer = Timer.periodic(const Duration(seconds: 3), (_) {
-      bookController.loadBookingDetail(date, code);
+      bookController.loadBookingDetail(date, code, silent: true);
     });
-
+    if (Get.arguments['fromCheckin'] == true) {
+      showSuccessDialog("Anda sudah check-in");
+    }
   }
   @override
   void dispose() {
@@ -71,7 +77,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
@@ -80,20 +85,24 @@ class _BookDetailPageState extends State<BookDetailPage> {
         textColor: Colors.white,
       ),
       body: Obx(() {
-        if (bookController.booking.value == null) {
+        final booking = bookController.booking.value;
+
+        if (booking == null) {
           return const Center(child: CircularProgressIndicator());
         }
 
+        /// 🔥 mapping data
         info = {
-          "Nomor Kartu Berobat": storage.read('medicalRecord') ?? '',
-          "Tanggal daftar": bookController.booking.value!.registerDate,
-          "Tanggal periksa": bookController.booking.value!.checkDate,
-          "Status validasi": bookController.booking.value!.status,
-          "Klinik": bookController.booking.value!.polyclinic,
-          "Dokter": bookController.booking.value!.doctor,
-          "Nomor antrian": bookController.booking.value!.code,
-          "Cara bayar": bookController.booking.value!.insurance,
+          "Nomor Rekam Medis": storage.read('medicalRecord') ?? '',
+          "Tanggal daftar": booking.registerDate,
+          "Tanggal periksa": booking.checkDate,
+          "Status validasi": booking.status,
+          "Klinik": booking.polyclinic,
+          "Dokter": booking.doctor,
+          "Nomor antrian": booking.code,
+          "Cara bayar": booking.insurance,
         };
+
         return SingleChildScrollView(
           child: Card(
             margin: const EdgeInsets.all(16),
@@ -104,83 +113,76 @@ class _BookDetailPageState extends State<BookDetailPage> {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
-                  children: [
-                    Obx(() {
-                      final booking = bookController.booking.value;
+                children: [
 
-                      if (booking == null) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      /// jika sudah diverifikasi di anjungan
-                      if (booking.status == "Terdaftar") {
-                        return Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Column(
-                            children: [
-                              Icon(Icons.verified, color: Colors.green, size: 50),
-                              SizedBox(height: 10),
-                              Text(
-                                "Sudah Check-in",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      /// QR jika belum checkin
-                      final qrData =
-                          "${booking.code}|${booking.noRkmMedis}|${booking.checkDate}";
-
-                      return Column(
-                        children: [
-                          const Text(
-                            "QR Nomor Antrian",
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 20),
-                          QrImageView(
-                            data: qrData,
-                            size: 180,
-                            backgroundColor: Colors.white,
-                          ),
-                        ],
-                      );
-                    }),
+                  /// 🔥 INFO DATA (INI YANG SEBELUMNYA HILANG)
+                  ...info!.entries
+                      .map((e) => _infoRow(e.key, e.value))
+                      .toList(),
 
                   const SizedBox(height: 20),
-                  // Note
-                  const SizedBox(height: 24),
-                if (_canCancel(bookController.booking.value!.checkDate))
-                    _buildCancelButton(context)
-                    else
+
+                  /// STATUS / QR
+                  if (booking.status == "Terdaftar")
                     Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                    "Registrasi tidak dapat dibatalkan karena tanggal pemeriksaan telah lewat.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    ),
-                    ),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(Icons.verified,
+                              color: Colors.green, size: 50),
+                          SizedBox(height: 10),
+                          Text(
+                            "Sudah Check-in",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
 
+
+                  const SizedBox(height: 24),
+
+                  /// BUTTON CANCEL
+                  if (_canCancel(booking.checkDate) && booking.status != "Terdaftar")
+                    _buildCancelButton(context)
+                  else if (booking.status == "Terdaftar")
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        "Anda sudah check-in",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        "Registrasi tidak dapat dibatalkan karena tanggal pemeriksaan telah lewat.",
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+
+                  /// NOTE
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -189,9 +191,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     ),
                     child: const Text(
                       "Terima kasih atas kepercayaan Anda.\n"
-                      "Bawalah kartu berobat Anda dan datang 1 jam sebelumnya.\n\n"
-                      "Jika memilih cara bayar UMUM, lakukan pembayaran di kasir terlebih dahulu sebelum ke Poliklinik tujuan Anda.\n\n"
-                      "Jika memilih cara bayar BPJS, bawalah surat rujukan atau surat kontrol asli dan tunjukkan pada petugas di lobby resepsionis.",
+                          "Bawalah kartu berobat Anda dan datang 1 jam sebelumnya.\n\n"
+                          "Jika memilih cara bayar UMUM, lakukan pembayaran di kasir terlebih dahulu sebelum ke Poliklinik tujuan Anda.\n\n"
+                          "Jika memilih cara bayar BPJS, bawalah surat rujukan atau surat kontrol asli dan tunjukkan pada petugas di lobby resepsionis.",
                       style: TextStyle(fontSize: 12, height: 1.5),
                       textAlign: TextAlign.justify,
                     ),
@@ -206,23 +208,66 @@ class _BookDetailPageState extends State<BookDetailPage> {
   }
 
   Widget _buildCancelButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton.icon(
-        icon: const Icon(Icons.cancel, color: Colors.white),
-        label: const Text(
-          "Batal Registrasi",
-          style: TextStyle(fontSize: 16, color: Colors.white),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+   return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 48,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.cancel, color: Colors.white),
+              label: const Text(
+                "Batal Registrasi",
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => _showCancelDialog(context),
+            ),
           ),
         ),
-        onPressed: () => _showCancelDialog(context),
-      ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: SizedBox(
+            height: 48,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+              label: const Text(
+                "Scan QR",
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+                onPressed: () async {
+                  timer?.cancel();
+
+                  final result = await Get.to(
+                        () => const ScanPage(),
+                    arguments: {
+                      "code": code,
+                    },
+                  );
+
+                  if (result == 'success') {
+                    bookController.loadBookingDetail(date, code);
+                  }
+
+
+                  timer = Timer.periodic(const Duration(seconds: 3), (_) {
+                    bookController.loadBookingDetail(date, code, silent: true);
+                  });
+                },
+            ),
+          ),
+        ),
+      ],
     );
   }
   void _showCancelDialog(BuildContext context) {

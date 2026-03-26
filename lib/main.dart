@@ -81,6 +81,9 @@ class MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _initDeepLinks();
+    Future.delayed(const Duration(seconds: 1), () {
+      checkForUpdate();
+    });
   }
 
   void _initDeepLinks() async {
@@ -94,7 +97,7 @@ class MyAppState extends State<MyApp> {
       _handleUri(initialUri);
     } on PlatformException catch (e) {
       // ignore: avoid_print
-      print('⚠️ Gagal menangkap initial URI: $e');
+      // print('⚠️ Gagal menangkap initial URI: $e');
     }
   }
 
@@ -235,11 +238,14 @@ class MyAppState extends State<MyApp> {
       if (updateInfo.updateAvailability ==
           UpdateAvailability.updateAvailable) {
 
-        // Immediate update (wajib update)
-        await InAppUpdate.performImmediateUpdate();
-
-        // atau Flexible update (tidak wajib)
-        // await InAppUpdate.startFlexibleUpdate();
+        if (updateInfo.immediateUpdateAllowed) {
+          /// WAJIB UPDATE
+          await InAppUpdate.performImmediateUpdate();
+        } else if (updateInfo.flexibleUpdateAllowed) {
+          /// OPSIONAL
+          await InAppUpdate.startFlexibleUpdate();
+          await InAppUpdate.completeFlexibleUpdate();
+        }
       }
     } catch (e) {
       print("Update error: $e");

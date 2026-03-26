@@ -19,6 +19,8 @@ import '../../../core/models/obat_model.dart';
 import '../../../core/models/operasi_model.dart';
 import '../../../core/models/prosedure_model.dart';
 import '../../../core/models/radiologi_model.dart';
+import '../../../core/models/resume_model.dart';
+import '../../../core/models/resume_ranap_model.dart';
 import '../../../core/models/sep_bpjs.dart';
 import '../../../core/models/soap_model.dart';
 import '../../../core/models/surat_model.dart';
@@ -31,6 +33,7 @@ import '../../../core/services/obat_service.dart';
 import '../../../core/services/operasi_service.dart';
 import '../../../core/services/radiologi_service.dart';
 import '../../../core/services/ranap_dokter_service.dart';
+import '../../../core/services/resume_service.dart';
 import '../../../core/services/sep_service.dart';
 import '../../../core/services/soap_service.dart';
 import '../../../core/services/tindakan_service.dart';
@@ -74,14 +77,42 @@ class HistoryController extends GetxController {
   final _radiologiService = RadiologiService();
   var suratSakit = Rx<SuratSakit?>(null);
 
+  final resumeData = Rxn<ResumeModel>();
+  final isLoadingResume = false.obs;
+  final resumeRanap = Rxn<ResumeRanapModel>();
+  final isLoadingResumeRanap = false.obs;
 
-  // Ambil data dokter berdasarkan tanggal
   Future<void> loadBilling() async {
     isLoading.value = true;
     billings.value = await _billingService.fetchBlling();
     isLoading.value = false;
   }
 
+
+  Future<void> loadResumeRanap(String noRawat) async {
+    try {
+      isLoadingResumeRanap.value = true;
+
+      final result = await ResumeService().getResumeRanap(noRawat);
+      resumeRanap.value = result;
+    } finally {
+      isLoadingResumeRanap.value = false;
+    }
+  }
+  Future<void> loadResume(String noRawat) async {
+    try {
+      isLoadingResume.value = true;
+
+      final service = ResumeService();
+      final result = await service.getResume(noRawat);
+
+      resumeData.value = result;
+    } catch (e) {
+      print("ERROR LOAD RESUME: $e");
+    } finally {
+      isLoadingResume.value = false;
+    }
+  }
   // Ambil data dokter berdasarkan tanggal
   Future<void> loadBooking() async {
     isLoading.value = true;
