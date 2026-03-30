@@ -1,0 +1,28 @@
+workflows:
+  ios-workflow:
+    name: iOS Build
+    max_build_duration: 60
+
+    environment:
+      flutter: stable
+
+    scripts:
+      - name: Flutter clean & get
+        script: |
+          flutter clean
+          flutter pub get
+
+      - name: Fix CocoaPods
+        script: |
+          cd ios
+          pod deintegrate
+          rm -rf Pods Podfile.lock
+          pod repo update
+          pod install
+
+      - name: Build iOS
+        script: |
+          flutter build ipa --release
+
+    artifacts:
+      - build/ios/ipa/*.ipa
