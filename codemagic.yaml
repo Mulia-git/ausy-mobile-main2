@@ -12,13 +12,13 @@ workflows:
           flutter clean
           flutter pub get
 
-      - name: Fix CocoaPods
+      - name: Fix CocoaPods (FULL RESET + VERBOSE)
         script: |
           cd ios
           pod deintegrate
           rm -rf Pods Podfile.lock
           pod repo update
-          pod install
+          pod install --verbose
 
       - name: Build iOS
         script: |
